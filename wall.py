@@ -1,13 +1,54 @@
 import PySimpleGUI as sg
-from layouts import pre_layout, rows
+from layouts import radios_p, get_rows
 from numpy import cos, sin, pi, sqrt
 
 # Определение массива переменных и их начальных значений
 p = d = d0 = alpha = h = sigma = None
 c11 = c12 = c21 = c22 = 0
+last_index = -1
+prefix = 0
+
+def configure_canvas(event, canvas, frame_id):
+    canvas.itemconfig(frame_id, width=canvas.winfo_width())
+
+def configure_frame(event, canvas):
+    canvas.configure(scrollregion=canvas.bbox("all"))
+
+
+def new_rows(id):
+    global last_index
+    global prefix
+
+    if last_index != -1:
+        if window[('Frame', prefix)].Widget:
+            widget = window[('Frame', prefix)].Widget
+            del window.AllKeysDict[('Frame', prefix)]
+            delete_widget(widget.master)
+
+    last_index = id
+    prefix += 1
+    #layout_frame = [[sg.Text("Hello World"), sg.Push(), sg.Button('Delete', key=('Delete', index))]]
+    #return [[sg.Frame(f"Frame {index:0>2d}", layout_frame, expand_x=True, key=('Frame', index))]]
+    #return frames[id]
+    return [[sg.Frame(f"Frame {prefix}", [[sg.T('Frame')], get_rows(prefix, id)], key=('Frame', prefix), visible=True)]]
+
+layout = [
+    [sg.Text('Название расчета')],
+    [sg.InputText(key='name_of_count', expand_x=True)],
+    [sg.Column(radios_p, size=(200, 200), pad=((0, 0), (30, 0)))],  # Группа радио-кнопок
+    [sg.Column(new_rows(0), scrollable=True, vertical_scroll_only=True, expand_x=True, expand_y=True, key='-COL-')],
+    [sg.Button('OK', pad=((0, 0), (250, 0))), sg.Button('Выход', pad=((1300, 0), (250, 0)))]  # Кнопки "OK" и "Выход" внизу
+]
 
 # Создание окна с размерами экрана
-window = sg.Window('расчет по выбору толщины стенок обоорудования', pre_layout, size=(1500, 850))
+window = sg.Window('расчет по выбору толщины стенок обоорудования', layout, size=(1500, 850), resizable=True, margins=(0, 0), finalize=True)
+
+
+frame_id = window['-COL-'].Widget.frame_id
+frame = window['-COL-'].Widget.TKFrame
+canvas = window['-COL-'].Widget.canvas
+canvas.bind("<Configure>", lambda event, canvas=canvas, frame_id=frame_id:configure_canvas(event, canvas, frame_id))
+frame.bind("<Configure>", lambda event, canvas=canvas:configure_frame(event, canvas))
 
 def delete_widget(widget):
     children = list(widget.children.values())
@@ -183,7 +224,7 @@ def validate(selected_id):
 while True:
     event, values = window.read()
     print(values)
-    if event == sg.WIN_CLOSED or event == 'Выход':
+    if event == 'Выход' or event == sg.WIN_CLOSED:
         break
     elif event == 'OK':
         if selected_id != -1:
@@ -192,7 +233,7 @@ while True:
         else:
             sg.popup('Пожалуйста, выберите вид рассчета')
 
-    elif event.startswith('input_'):
+    elif event and event[0].startswith('input_'):
         # Обработка ввода в полях
         input_key = event
         input_value = values[input_key]
@@ -204,123 +245,9 @@ while True:
 
             sg.popup('Пожалуйста, введите только цифры и знак минус')
 
-    elif event.startswith('Radio_'):
+    elif event and event.startswith('Radio_'):
         selected_id = int(event[-1])
-        for i in range(0, 5):
-            if i != selected_id:
-                window[f"Frame_{i}"].update(visible=False)
-                window.visibility_changed()
-                window['-COL-'].contents_changed()
-        window[f"Frame_{selected_id}"].update(visible=True)
-        window.visibility_changed()
-        window['-COL-'].contents_changed()
+        window.extend_layout(window['-COL-'], rows=new_rows(selected_id))
+
 # Закрытие окна
 window.close()
-
-
-
-
-
-
-# """
-#     Demonstrates how to use the Window.layout_extend method.
-#     Layouts can be extended at the Window level or within any container element such as a Column.
-#     This demo shows how to extend both.
-#     Note that while you can extend, add to, a layout, you cannot delete items from a layout.  Of course you
-#     can make them invisible after adding them.
-#
-#     When using scrollable Columns be sure and call Column.visibility_changed so that the scrollbars will
-#         be correctly reposititioned
-#
-#     Copyright 2020-2023 PySimpleSoft, Inc. and/or its licensors. All rights reserved.
-#
-#     Redistribution, modification, or any other use of PySimpleGUI or any portion thereof is subject to the terms of the PySimpleGUI License Agreement available at https://eula.pysimplegui.com.
-#
-#     You may not redistribute, modify or otherwise use PySimpleGUI or its contents except pursuant to the PySimpleGUI License Agreement.
-# """
-#
-# layout = [[sg.Text('My Window')],
-#           [sg.Text('Click to add a row inside the Frame'), sg.B('+', key='-ADD FRAME-')],
-#           [sg.Text('Click to add a row inside the Column'), sg.B('+', key='-ADD COL-')],
-#           [sg.Text('Click to add a row inside the Window'), sg.B('+', key='-ADD WIN-')],
-#           [sg.Frame('Frame', [[sg.T('Frame')]], key='-FRAME-')],
-#           [sg.Col([[sg.T('Column')]], scrollable=True, key='-COL-', s=(400, 400))],
-#           [sg.Input(key='-IN-'), sg.Text(size=(12, 1), key='-OUT-')],
-#           [sg.Button('Button'), sg.Button('Exit')]]
-#
-# window = sg.Window('Window Title', layout)
-#
-# i = 0
-#
-# while True:  # Event Loop
-#     event, values = window.read()
-#     print(event, values)
-#     if event in (sg.WIN_CLOSED, 'Exit'):
-#         break
-#     if event == '-ADD FRAME-':
-#         window.extend_layout(window['-FRAME-'], rows[i])
-#         i += 1
-#     elif event == '-ADD COL-':
-#         window.extend_layout(window['-COL-'], [[sg.T('A New Input Line'), sg.I(key=f'-IN-{i}-')]])
-#         window.visibility_changed()
-#         window['-COL-'].contents_changed()
-#         i += 1
-#     elif event == '-ADD WIN-':
-#         window.extend_layout(window, [[sg.T('A New Input Line'), sg.I(key=f'-IN-{i}-')]])
-#         i += 1
-# window.close()
-
-
-
-
-
-
-
-
-
-#
-# def configure_canvas(event, canvas, frame_id):
-#     canvas.itemconfig(frame_id, width=canvas.winfo_width())
-#
-# def configure_frame(event, canvas):
-#     canvas.configure(scrollregion=canvas.bbox("all"))
-#
-#
-#
-# def new_rows():
-#     global index
-#     index += 1
-#     layout_frame = [[sg.Text("Hello World"), sg.Push(), sg.Button('Delete', key=('Delete', index))]]
-#     return [[sg.Frame(f"Frame {index:0>2d}", layout_frame, expand_x=True, key=('Frame', index))]]
-#
-# index = 0
-#
-# layout = [
-#     [sg.Button("Add")],
-#     [sg.Column(new_rows(), scrollable=True, vertical_scroll_only=True, expand_x=True, expand_y=True, key='Scrollable Column')]
-# ]
-#
-# window = sg.Window("Title", layout, resizable=True, margins=(0, 0), finalize=True)
-#
-# frame_id = window['Scrollable Column'].Widget.frame_id
-# frame = window['Scrollable Column'].Widget.TKFrame
-# canvas = window['Scrollable Column'].Widget.canvas
-# canvas.bind("<Configure>", lambda event, canvas=canvas, frame_id=frame_id:configure_canvas(event, canvas, frame_id))
-# frame.bind("<Configure>", lambda event, canvas=canvas:configure_frame(event, canvas))
-#
-# window.maximize()
-#
-# while True:
-#
-#     event, values = window.read()
-#
-#     if event in ('Close', sg.WIN_CLOSED):
-#         break
-#     elif event == 'Add':
-#         window.extend_layout(window['Scrollable Column'], rows=new_rows())
-#     elif event[0] == 'Delete':
-#         i = event[1]
-#         widget = window[('Frame', i)].Widget
-#         del window.AllKeysDict[('Frame', i)]
-#         delete_widget(widget.master)
-# window.close()
