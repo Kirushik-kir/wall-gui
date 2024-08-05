@@ -3,6 +3,10 @@ from os import getcwd
 import PySimpleGUI as sg
 from layouts import radios_p, get_rows
 from numpy import cos, sin, pi, sqrt
+from math import ceil
+from tkinter.filedialog import asksaveasfilename
+import pandas as pd
+
 
 from vars import pics
 
@@ -15,6 +19,14 @@ checkcrit = False
 last_index = -1
 prefix = 0
 
+def ExportToExcel(OutDF):
+    usrfilename = asksaveasfilename(defaultextension = '.xlsx',
+                                    filetypes = [('Excel', '*.xlsx')],
+                                    initialdir = curdir,
+                                    initialfile = 'FileName')
+    writer = pd.ExcelWriter(usrfilename)
+    OutDF.to_excel(writer, sheet_name = 'Result')
+    writer._save()
 
 def configure_canvas(event, canvas, frame_id):
     canvas.itemconfig(frame_id, width=canvas.winfo_width())
@@ -50,20 +62,15 @@ layout = [
     [sg.Text('Название расчета')],
     [sg.InputText(key='name_of_count', expand_x=True)],
     [sg.Column(radios_p, size=(200, 200), pad=((0, 0), (30, 0)))],  # Группа радио-кнопок
-    [sg.Column(new_rows(0), pad=((10, 30), (10, 0)), expand_y=True, key='-COL-'), sg.Image(key='-PIC-', pad=((50, 0), (0, 200)))],
-    [sg.Button('OK', pad=((10, 0), (0, 50))), sg.Button('Выход', pad=((1300, 0), (0, 50)))]
+    [sg.Column(new_rows(0), pad=((10, 0), (20, 0)), expand_y=True, key='-COL-'), sg.Image(key='-PIC-', pad=((50, 0), (0, 100)))],
+    [sg.Button('OK', pad=((10, 0), (0, 10))), sg.Button('Выход', pad=((1100, 0), (0, 10)))]
     # Кнопки "OK" и "Выход" внизу
 ]
 
 # Создание окна с размерами экрана
-window = sg.Window('расчет по выбору толщины стенок обоорудования', layout, size=(1500, 850), resizable=True,
+window = sg.Window('расчет по выбору толщины стенок обоорудования', layout, size=(1300, 725), resizable=True,
                    margins=(0, 0), finalize=True)
-
-#frame_id = window['-COL-'].Widget.frame_id
-#frame = window['-COL-'].Widget.TKFrame
-#canvas = window['-COL-'].Widget.canvas
-#canvas.bind("<Configure>", lambda event, canvas=canvas, frame_id=frame_id: configure_canvas(event, canvas, frame_id))
-#frame.bind("<Configure>", lambda event, canvas=canvas: configure_frame(event, canvas))
+window2 = None
 
 
 def delete_widget(widget):
@@ -262,15 +269,20 @@ while True:
             if validate(selected_id):
                 count(selected_id)
                 if not checkcrit:
-                    #sg.popup('Результат:', srr)
                     critik = ''
                     if selected_id in {0, 3}:
-                        critik = f"c = {crit}"
+                        critik = f"c = {ceil(crit * 10) / 10}"
                     elif selected_id == 1:
-                        critik = f"c1 = {crit1}" + f" c1 = {crit2}" + f" c1 = {crit3}"
+                        critik = f"c1 = {ceil(crit1 * 10) / 10}" + f" c1 = {ceil(crit2 * 10) / 10}" + f" c1 = {ceil(crit3 * 10) / 10}"
                     elif selected_id == 2:
-                        critik = f"c1 = {crit1}" + f" c1 = {crit2}"
-                    window2 = sg.Window('расчет по выбору толщины стенок обоорудования', [[sg.T(f" Результат с учётом допусков: {srr}\n Результат без учёта допусков: {sr}\n Результат проверки критерия применимости формулы: {critik}")]], size=(600, 150), margins=(0, 0), finalize=True)
+                        critik = f"c1 = {ceil(crit1 * 10) / 10}" + f" c1 = {ceil(crit2 * 10) / 10}"
+                    if window2 is None:
+                        layout2 = [
+                            [sg.T(f" Результат с учётом допусков: {ceil(srr * 10) / 10}\n Результат без учёта допусков: {ceil(sr * 10) / 10}\n Результат проверки критерия применимости формулы: {critik}")],
+                            [sg.Button('Экспорт результатов', key='out', enable_events=True)],
+                            [sg.Button('Выход', key='Выход', enable_events=True)],
+                        ]
+                        window2 = sg.Window('расчет по выбору толщины стенок обоорудования', layout2 , size=(600, 150), margins=(0, 0), finalize=True)
                 else:
                     sg.popup('Критический показатель проверки!')
             else:
@@ -279,7 +291,6 @@ while True:
             sg.popup('Пожалуйста, выберите вид рассчета')
 
     elif event and event.startswith('input_'):
-        print(".!.")
         # Обработка ввода в полях
         input_key = event
         input_value = values[input_key]
@@ -298,6 +309,40 @@ while True:
         print(cwd)
         window['-PIC-'].update(source=cwd)
         window.extend_layout(window['-COL-'], rows=new_rows(selected_id))
+
+    if window2:
+        event2, values2 = window2.read()
+
+        if event2 == sg.WIN_CLOSED or event2 == 'Выход':
+            window2.close()
+            window2 = None  # После закрытия второго окна устанавливаем его в None, чтобы можно было создать заново
+
+        elif event2 == 'out':
+            print('.!.')
+            keylist = []
+            vallist = []
+            for key in window.key_dict:
+                print(key)
+                try:
+                    if window[key].get() not in ['', True, False]:
+                        keylist.append(key)
+                        vallist.append(window[key].get())
+
+                        print(window[key].get())
+
+                    else:
+                        print('ooops!')
+
+                except AttributeError:
+                    print('AttributeError')
+
+            outdf = pd.DataFrame({
+                'Обозначение': keylist,
+                'Значение': vallist
+            })
+            print(outdf)
+
+            ExportToExcel(outdf)
 
 # Закрытие окна
 window.close()
