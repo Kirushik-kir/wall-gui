@@ -9,6 +9,8 @@ import pandas as pd
 
 
 from vars import pics
+from vars import GlblVarList
+
 
 # Определение массива переменных и их начальных значений
 p = d = d0 = alpha = h = sigma = 0
@@ -269,7 +271,7 @@ while True:
             if validate(selected_id):
                 count(selected_id)
                 if not checkcrit:
-                    critik = ''
+                    critik = 'undef'
                     if selected_id in {0, 3}:
                         critik = f"c = {ceil(crit * 10) / 10}"
                     elif selected_id == 1:
@@ -278,7 +280,9 @@ while True:
                         critik = f"c1 = {ceil(crit1 * 10) / 10}" + f" c1 = {ceil(crit2 * 10) / 10}"
                     if window2 is None:
                         layout2 = [
-                            [sg.T(f" Результат с учётом допусков: {ceil(srr * 10) / 10}\n Результат без учёта допусков: {ceil(sr * 10) / 10}\n Результат проверки критерия применимости формулы: {critik}")],
+                            [sg.T(f" Результат с учётом допусков: {ceil(srr * 10) / 10}\n "
+                                  f"Результат без учёта допусков: {ceil(sr * 10) / 10}\n "
+                                  f"Результат проверки критерия применимости формулы: {critik}")],
                             [sg.Button('Экспорт результатов', key='out', enable_events=True)],
                             [sg.Button('Выход', key='Выход', enable_events=True)],
                         ]
@@ -319,14 +323,13 @@ while True:
 
         elif event2 == 'out':
             print('.!.')
-            keylist = []
+            keylist = GlblVarList[selected_id]
             vallist = []
             for key in window.key_dict:
                 print(key)
                 try:
                     if window[key].get() not in ['', True, False]:
-                        keylist.append(key)
-                        vallist.append(window[key].get())
+                        vallist.append(float(window[key].get()))
 
                         print(window[key].get())
 
@@ -335,7 +338,20 @@ while True:
 
                 except AttributeError:
                     print('AttributeError')
+            #keylist.append('', '', 'Результат с учётом допусков', 'Результат без учёта допусков', 'Результат проверки критерия применимости формулы')
+            #vallist.append('', '', ceil(srr * 10) / 10, ceil(sr * 10) / 10, critik)
+            keylist.append(' ')
+            vallist.append(' ')
+            keylist.append(' ')
+            vallist.append(' ')
 
+            keylist.append('Результат с учётом допусков')
+            keylist.append('Результат без учёта допусков')
+            keylist.append('Результат проверки критерия применимости формулы')
+
+            vallist.append(ceil(srr * 10) / 10)
+            vallist.append(ceil(sr * 10) / 10)
+            vallist.append(critik)
             outdf = pd.DataFrame({
                 'Обозначение': keylist,
                 'Значение': vallist
