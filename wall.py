@@ -13,7 +13,7 @@ from vars import GlblVarList
 
 
 # Определение массива переменных и их начальных значений
-p = d = d0 = alpha = h = sigma = 0
+p = d = d0 = alpha = h = sigma = o = 0
 c11 = c12 = c21 = c22 = 0
 srr = sr = 0  # result
 crit = crit1 = crit2 = crit3 = 0
@@ -63,7 +63,7 @@ def new_rows(id):
 layout = [
     [sg.Text('Название расчета')],
     [sg.InputText(key='name_of_count', expand_x=True)],
-    [sg.Column(radios_p, size=(200, 200), pad=((0, 0), (30, 0)))],  # Группа радио-кнопок
+    [sg.Column(radios_p, size=(250, 200), pad=((0, 0), (30, 0)))],  # Группа радио-кнопок
     [sg.Column(new_rows(0), pad=((10, 0), (20, 0)), expand_y=True, key='-COL-'), sg.Image(key='-PIC-', pad=((50, 0), (0, 100)))],
     [sg.Button('OK', pad=((10, 0), (0, 10))), sg.Button('Выход', pad=((1100, 0), (0, 10)))]
     # Кнопки "OK" и "Выход" внизу
@@ -104,6 +104,8 @@ def cil_ob():
 
     if crit > .3:
         print('fail!')
+        checkcrit = False
+    else:
         checkcrit = True
 
 
@@ -129,9 +131,11 @@ def kon_ob():
 
     if (crit1 < 0.005) or (crit1 > .1) or (alpha > 45):
         print('fail!')
-        checkcrit = True
+        checkcrit = False
     elif (crit2 > crit3) or (alpha > 45):
         print('fail!')
+        checkcrit = False
+    else:
         checkcrit = True
 
 
@@ -156,6 +160,8 @@ def elliptic_dno():
 
     if (crit1 < 0.0025) or (crit1 > 0.1) or (crit2 < 0.2) or (crit2 > 0.5):
         print('fail!')
+        checkcrit = False
+    else:
         checkcrit = True
 
 
@@ -180,9 +186,27 @@ def semispheric_dno():
 
 # Цилиндрический(ая) \n коллектор, штуцер, \n труба или колено
 def long_hren():
-    print('ne sdelano poka')
-    return True
+    global p, d, fi, o, c11
+    global checkcrit, srr, sr, crit
+    fi = 1
 
+    print('Цилиндрическая обечайка')
+    m1 = 2
+    m2 = 1
+    m3 = 1
+
+    sr = (p * d) / (2 * fi * o + p) + c11
+    srr = round(sr, 2)
+
+    crit = sr - c11 / d
+
+    print(crit)
+
+    if crit <= 0.25:
+        print('fail!')
+        checkcrit = False
+    else:
+        checkcrit = True
 
 def count(selected_item):
     if selected_item == 0:
@@ -204,7 +228,7 @@ flag = False
 
 
 def validate(selected_id):
-    global p, d, sigma, c11, c12, c21, c22, d0, alpha, h
+    global p, d, sigma, c11, c12, c21, c22, d0, alpha, h, o, fi
     assert selected_id <= 4 or selected_id >= 0, 'The selected item did not get into the scope [0, 4]'
     if selected_id == 0:
         if not all((values[f"input_{prefix}-{i}"] for i in range(7))): return 0
@@ -249,15 +273,14 @@ def validate(selected_id):
         c21 = float(values[f"input_{prefix}-5"])
         c22 = float(values[f"input_{prefix}-6"])
     elif selected_id == 4:
-        if not all((values[f"input_{prefix}-{i}"] for i in range(7))): return 0
+        if not all((values[f"input_{prefix}-{i}"] for i in range(5))): return 0
 
         p = float(values[f"input_{prefix}-0"])
         d = float(values[f"input_{prefix}-1"])
-        sigma = float(values[f"input_{prefix}-2"])
-        c11 = float(values[f"input_{prefix}-3"])
-        c12 = float(values[f"input_{prefix}-4"])
-        c21 = float(values[f"input_{prefix}-5"])
-        c22 = float(values[f"input_{prefix}-6"])
+        o = float(values[f"input_{prefix}-2"])
+        fi = float(values[f"input_{prefix}-3"])
+        c11 = float(values[f"input_{prefix}-4"])
+
     return 1
 
 
@@ -270,9 +293,9 @@ while True:
         if selected_id != -1:
             if validate(selected_id):
                 count(selected_id)
-                if not checkcrit:
+                if checkcrit:
                     critik = 'undef'
-                    if selected_id in {0, 3}:
+                    if selected_id in {0, 3, 4, 5}:
                         critik = f"c = {ceil(crit * 10) / 10}"
                     elif selected_id == 1:
                         critik = f"c1 = {ceil(crit1 * 10) / 10}" + f" c1 = {ceil(crit2 * 10) / 10}" + f" c1 = {ceil(crit3 * 10) / 10}"
