@@ -64,8 +64,8 @@ def new_rows(id):
 layout = [
     [sg.Text('Название расчета')],
     [sg.InputText(key='name_of_count', expand_x=True)],
-    [sg.Column(radios_p, size=(250, 200), pad=((0, 0), (30, 0)))],  # Группа радио-кнопок
-    [sg.Column(new_rows(0), pad=((10, 0), (20, 0)), expand_y=True, key='-COL-'), sg.Image(key='-PIC-', pad=((50, 0), (0, 100)))],
+    [sg.Column(radios_p, size=(250, 200), pad=((0, 0), (30, 0))), sg.Image(key='-PIC-', pad=((50, 0), (50, 0)))],  # Группа радио-кнопок
+    [sg.Column(new_rows(0), pad=((10, 0), (20, 0)), expand_y=True, key='-COL-') ],
     [sg.Button('OK', pad=((10, 0), (0, 10))), sg.Button('Выход', pad=((1100, 0), (0, 10)))]
     # Кнопки "OK" и "Выход" внизу
 ]

@@ -7,6 +7,6 @@ radios_p = [[sg.Radio(name, 'RADIOp', key=f'Radio_{i}', enable_events=True)] for
 
 def get_rows(prefix, id):
     return [
-        [sg.Text(field_name, size=(60, 1)), sg.Text('', size=(1, 1)),
-         sg.InputText(key=f'input_{prefix}-{index}', enable_events=True)] for index, field_name in enumerate(GlblVarList[id])
+        [sg.Text(field_name, size=(50, 1)), sg.Text('', size=(1, 1)),
+         sg.InputText(key=f'input_{prefix}-{index}', enable_events=True, size=10)] for index, field_name in enumerate(GlblVarList[id])
     ]
