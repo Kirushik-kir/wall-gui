@@ -15,7 +15,7 @@ from vars import GlblVarList
 # Определение массива переменных и их начальных значений
 p = d = d0 = alpha = h = sigma = o = 0
 c11 = c12 = c21 = c22 = 0
-srr = sr = 0  # result
+srr = sr = sf = 0  # result
 crit = crit1 = crit2 = crit3 = 0
 checkcrit = False
 last_index = -1
@@ -88,7 +88,7 @@ def delete_widget(widget):
 # Обработка цилиндрической обечайки
 def cil_ob():
     global p, d, sigma, c11, c12, c21, c22, d0, alpha, h
-    global checkcrit, srr, sr, crit
+    global checkcrit, srr, sr, sf, crit
     fi = 1
 
     print('Цилиндрическая обечайка')
@@ -113,7 +113,7 @@ def cil_ob():
 # Обработка конической обечайки
 def kon_ob():
     global p, d, sigma, c11, c12, c21, c22, d0, alpha, h
-    global checkcrit, srr, sr, crit1, crit2, crit3
+    global checkcrit, srr, sr, sf, crit1, crit2, crit3
     fi = 1
 
     print('Коническая обечайка')
@@ -143,7 +143,7 @@ def kon_ob():
 # Обработка эллиптического днища
 def elliptic_dno():
     global p, d, sigma, c11, c12, c21, c22, d0, alpha, h
-    global checkcrit, srr, sr, crit1, crit2
+    global checkcrit, srr, sr, sf, crit1, crit2
     fi = 1
 
     print('Эллиптическое днище')
@@ -169,7 +169,7 @@ def elliptic_dno():
 # Обработка цилиндрической обечайки
 def semispheric_dno():
     global p, d, sigma, c11, c12, c21, c22, d0, alpha, h
-    global checkcrit, srr, sr, crit
+    global checkcrit, srr, sr, crit, sf
     fi = 1
 
     print('Полусферическое днище')
@@ -188,7 +188,7 @@ def semispheric_dno():
 # Цилиндрический(ая) \n коллектор, штуцер, \n труба или колено
 def long_hren():
     global p, d, fi, o, c11
-    global checkcrit, srr, sr, crit
+    global checkcrit, srr, sr, sf, crit
     fi = 1
 
     print('Цилиндрическая обечайка')
@@ -295,6 +295,7 @@ while True:
             if validate(selected_id):
                 count(selected_id)
                 if checkcrit:
+                    sf = round(srr + c11 + c12 + c21 + c22, 2)
                     critik = 'undef'
                     if selected_id in {0, 3, 4, 5}:
                         critik = f"c = {ceil(crit * 10) / 10}"
@@ -304,8 +305,8 @@ while True:
                         critik = f"c1 = {ceil(crit1 * 10) / 10}" + f" c1 = {ceil(crit2 * 10) / 10}"
                     if window2 is None:
                         layout2 = [
-                            [sg.T(f" Результат с учётом допусков: {ceil(srr * 10) / 10}\n "
-                                  f"Результат без учёта допусков: {ceil(sr * 10) / 10}\n "
+                            [sg.T(f" Результат без учёта допусков: {ceil(srr * 10) / 10}\n "
+                                  f"Результат с учётом допусков: {ceil(sf * 10) / 10}\n "
                                   f"Результат проверки критерия применимости формулы: {critik}")],
                             [sg.Button('Экспорт результатов', key='out', enable_events=True)],
                             [sg.Button('Выход', key='Выход', enable_events=True)],
