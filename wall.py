@@ -1,7 +1,7 @@
 from os import getcwd
 
 import PySimpleGUI as sg
-from layouts import radios_p, get_rows
+from layouts import radios_p, get_rows, get_menu
 from numpy import cos, sin, pi, sqrt
 from math import ceil
 from tkinter.filedialog import asksaveasfilename
@@ -66,15 +66,17 @@ layout = [
     [sg.InputText(key='name_of_count', expand_x=True)],
     [sg.Column(radios_p, size=(250, 200), pad=((0, 0), (30, 0))), sg.Image(key='-PIC-', pad=((50, 0), (50, 0)))],  # Группа радио-кнопок
     [sg.Column(new_rows(0), pad=((10, 0), (20, 0)), expand_y=True, key='-COL-') ],
-    [sg.Button('OK', pad=((10, 0), (0, 10))), sg.Button('Выход', pad=((1100, 0), (0, 10)))]
+    [sg.Button('OK', pad=((10, 0), (0, 10))), sg.Button('Назад', pad=((500, 0), (0, 0))), sg.Button('Выход', pad=((500, 0), (0, 10)))]
     # Кнопки "OK" и "Выход" внизу
 ]
 
 # Создание окна с размерами экрана
-window = sg.Window('Расчет по выбору толщины стенок оборудования', layout, size=(1300, 725), resizable=True,        #240909 - исправил опечатки в названии окна
-                   margins=(0, 0), finalize=True)
+window = None
+kryshka = None
+krepezh = None
 window2 = None
 
+menu = get_menu()
 
 def delete_widget(widget):
     children = list(widget.children.values())
@@ -286,10 +288,45 @@ def validate(selected_id):
 
 
 while True:
-    event, values = window.read()
+    if window:
+        event, values = window.read()
+    elif kryshka:
+        event, values = kryshka.read()
+    elif krepezh:
+        event, values = krepezh.read()
+    else:
+        event, values = menu.read()
     print(event, values)
     if event == 'Выход' or event == sg.WIN_CLOSED:
         break
+    elif event == "Толщина стенки":
+        print("fruheiug")
+        window = sg.Window('Расчет по выбору толщины стенок оборудования', layout, size=(1300, 725), resizable=True,        #240909 - исправил опечатки в названии окна
+                   margins=(0, 0), finalize=True)
+        window.read()
+        menu.close()
+    elif event == "Толщина крышки":
+        kryshka = sg.Window('Расчет по выбору толщины крышки', [[sg.Text("it is empty here now")]], size=(1300, 725), resizable=True,        #240909 - исправил опечатки в названии окна
+                   margins=(0, 0), finalize=True)
+        kryshka.read()
+        menu.close()
+    elif event == "Крепеж":
+        krepezh = sg.Window('Расчет по выбору крепежа', [[sg.Text("it is empty here now")]], size=(1300, 725), resizable=True,        #240909 - исправил опечатки в названии окна
+                   margins=(0, 0), finalize=True)
+        krepezh.read()
+        menu.close()
+    elif event == "Назад":
+        if window:
+            window.close()
+            window = None
+        if kryshka:
+            kryshka.close()
+            kryshka = None
+        if krepezh:
+            krepezh.close()
+            krepezh = None
+        menu = get_menu()
+        menu.read()
     elif event == 'OK':
         if selected_id != -1:
             if validate(selected_id):
@@ -386,4 +423,5 @@ while True:
             ExportToExcel(outdf)
 
 # Закрытие окна
-window.close()
+if window:
+    window.close()
